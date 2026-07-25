@@ -31,5 +31,7 @@ for (const e of entries) {
   if (e.bluesky && !e.bluesky.ok) console.log(`  Bluesky エラー: ${e.bluesky.error}`);
   if (e.threads?.ok)      console.log(`  Threads ${e.threads.url}`);
   if (e.threads && !e.threads.ok) console.log(`  Threads エラー: ${e.threads.error}`);
+  if (e.linkedin?.ok)      console.log(`  LinkedIn ${e.linkedin.url}`);
+  if (e.linkedin && !e.linkedin.ok) console.log(`  LinkedIn エラー: ${e.linkedin.error}`);
   console.log();
 }

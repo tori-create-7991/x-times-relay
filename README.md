@@ -1,6 +1,6 @@
 # text-sns-relay（旧 x-times-relay）
 
-自分の短文投稿を **X / Bluesky / Threads** に同時投稿し、Slack と Discord の **Webhook** に通知するためのツールです。
+自分の短文投稿を **X / Bluesky / Threads / LinkedIn** に同時投稿し、Slack と Discord の **Webhook** に通知するためのツールです。
 **ブラウザ UI**（ローカル、履歴閲覧つき）と **CLI** があります。
 
 ## リポジトリの取得
@@ -14,9 +14,10 @@ cd text-sns-relay
 
 | プラットフォーム | 投稿 | 認証 |
 |---|---|---|
-| X | ✓ | OAuth1.0a |
+| X | ✓ | OAuth1.0a（直接） or Typefully API |
 | Bluesky | ✓ | App Password |
 | Threads（Meta） | ✓ | Threads API アクセストークン |
+| LinkedIn | ✓ | Typefully API のみ（直接APIは審査が重いため未実装） |
 
 未設定のプラットフォームは自動でスキップされます（`postAll` は各プラットフォームを並行実行し、設定済みの分だけ投稿）。
 
@@ -56,6 +57,22 @@ X Developer Portal でアプリ作成・ユーザー認証（OAuth1.0a）。
 - `X_API_KEY` / `X_API_SECRET` / `X_ACCESS_TOKEN` / `X_ACCESS_TOKEN_SECRET`
 - `X_USERNAME` … 投稿 URL 用（`@` なし）
 
+#### 課金せずにX投稿したい場合（Typefully経由、無料プラン）
+
+X APIのPay Per Use（$5〜の従量課金）を避けたい場合、[Typefully](https://typefully.com)
+無料プランのAPI経由でX投稿できる。TypefullyがX公式パートナーとしてAPI費用を負担する
+構造のため、自分でX Developer Portalのアプリ・Project設定は不要。
+
+- 制限: **無料プランは月15投稿まで**（1ソーシャルセット）
+- `.env`に`TYPEFULLY_API_KEY`と`TYPEFULLY_SOCIAL_SET_ID`を設定すると、X投稿はこちらが
+  優先され、直接API方式（`X_API_KEY`等）は使われなくなる
+- APIキー: Typefully → Settings → API で発行
+- `TYPEFULLY_SOCIAL_SET_ID`: 同じSettings → APIページの「Development mode」を
+  オンにすると画面上にIDが表示される
+
+月15投稿を超える運用にしたくなったら、素直にPay Per Use（$5チャージ、以降投稿
+$0.01〜0.015/件）に切り替えるのが実用的。
+
 ### Bluesky の `.env`
 
 アカウント設定 → Privacy and Security → App Passwords で発行（本パスワードは使わない）。
@@ -69,6 +86,15 @@ Meta for Developers でアプリ作成 → Threads API プロダクト追加 →
 
 - `THREADS_USER_ID`
 - `THREADS_ACCESS_TOKEN`
+
+### LinkedIn の `.env`
+
+LinkedIn公式APIは個人開発者の投稿権限申請が重い（手動審査・平均数ヶ月・却下も多い）ため、
+直接APIは未実装。**Typefully経由のみ**対応（上記「課金せずにX投稿したい場合」参照）。
+
+- `TYPEFULLY_API_KEY` / `TYPEFULLY_SOCIAL_SET_ID`（Xと共通）
+- `LINKEDIN_ENABLED=1`（未設定だとTypefully設定済みでもLinkedInには投稿しない）
+- Typefully側で対象アカウントのLinkedInを連携済みであること
 
 ## Web UI（ローカル）
 
@@ -158,7 +184,8 @@ lib/
   load-env.ts
   relay-webhooks.ts     # Slack/Discord通知
   oauth1a.ts             # X OAuth1.0a署名
-  post-x.ts              # X投稿
+  post-x.ts              # X投稿（直接API）
+  post-typefully.ts      # X/LinkedIn投稿（Typefully経由、無料プラン月15投稿まで）
   post-bluesky.ts        # Bluesky投稿（セッション90分キャッシュ）
   post-threads.ts        # Threads投稿（2ステップ: container作成→publish）
   post-all.ts            # 全プラットフォーム並行投稿 + 履歴保存

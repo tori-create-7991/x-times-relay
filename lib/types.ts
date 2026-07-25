@@ -9,12 +9,14 @@ export interface HistoryEntry {
   x: PlatformResult;
   bluesky: PlatformResult;
   threads: PlatformResult;
+  linkedin: PlatformResult;
 }
 
 export interface PostAllResult {
   x: PlatformResult;
   bluesky: PlatformResult;
   threads: PlatformResult;
+  linkedin: PlatformResult;
 }
 
 export interface OAuth1aParams {
