@@ -33,8 +33,10 @@ async function main(): Promise<void> {
   if (result.bluesky && !result.bluesky.ok) console.error("Bluesky エラー:", result.bluesky.error);
   if (result.threads?.ok) console.log("Threads: ", result.threads.url);
   if (result.threads && !result.threads.ok) console.error("Threads エラー:", result.threads.error);
+  if (result.linkedin?.ok) console.log("LinkedIn:", result.linkedin.url);
+  if (result.linkedin && !result.linkedin.ok) console.error("LinkedIn エラー:", result.linkedin.error);
 
-  const anyOk = result.x?.ok || result.bluesky?.ok || result.threads?.ok;
+  const anyOk = result.x?.ok || result.bluesky?.ok || result.threads?.ok || result.linkedin?.ok;
   if (!anyOk) {
     console.error("いずれのプラットフォームにも投稿できませんでした。");
     process.exit(1);

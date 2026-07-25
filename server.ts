@@ -159,6 +159,8 @@ const HTML = `<!DOCTYPE html>
         if (data.bluesky && !data.bluesky.ok) lines.push(\`<span class="platform" style="color:var(--err)">Bluesky: エラー — \${data.bluesky.error || '失敗'}</span>\`);
         if (data.threads?.ok) lines.push(\`<span class="platform">Threads: <a href="\${data.threads.url}" target="_blank" rel="noopener">\${data.threads.url}</a></span>\`);
         if (data.threads && !data.threads.ok) lines.push(\`<span class="platform" style="color:var(--err)">Threads: エラー — \${data.threads.error || '失敗'}</span>\`);
+        if (data.linkedin?.ok) lines.push(\`<span class="platform">LinkedIn: <a href="\${data.linkedin.url}" target="_blank" rel="noopener">\${data.linkedin.url}</a></span>\`);
+        if (data.linkedin && !data.linkedin.ok) lines.push(\`<span class="platform" style="color:var(--err)">LinkedIn: エラー — \${data.linkedin.error || '失敗'}</span>\`);
 
         setMsg("完了:\\n" + lines.join(""), "ok");
         textEl.value = "";
@@ -188,6 +190,7 @@ function renderHistory(history: HistoryEntry[]): string {
       <td>${link(e.x)}</td>
       <td>${link(e.bluesky)}</td>
       <td>${link(e.threads)}</td>
+      <td>${link(e.linkedin)}</td>
     </tr>`;
   }).join("\n");
 
@@ -223,7 +226,7 @@ function renderHistory(history: HistoryEntry[]): string {
   <div class="wrap">
     ${history.length === 0 ? '<p class="empty">まだ履歴がありません。</p>' : `
     <table>
-      <thead><tr><th>日時</th><th>本文</th><th>X</th><th>Bluesky</th><th>Threads</th></tr></thead>
+      <thead><tr><th>日時</th><th>本文</th><th>X</th><th>Bluesky</th><th>Threads</th><th>LinkedIn</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`}
   </div>

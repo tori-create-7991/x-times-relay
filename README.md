@@ -1,6 +1,6 @@
 # text-sns-relay（旧 x-times-relay）
 
-自分の短文投稿を **X / Bluesky / Threads** に同時投稿し、Slack と Discord の **Webhook** に通知するためのツールです。
+自分の短文投稿を **X / Bluesky / Threads / LinkedIn** に同時投稿し、Slack と Discord の **Webhook** に通知するためのツールです。
 **ブラウザ UI**（ローカル、履歴閲覧つき）と **CLI** があります。
 
 ## リポジトリの取得
@@ -14,9 +14,10 @@ cd text-sns-relay
 
 | プラットフォーム | 投稿 | 認証 |
 |---|---|---|
-| X | ✓ | OAuth1.0a |
+| X | ✓ | OAuth1.0a（直接） or Typefully API |
 | Bluesky | ✓ | App Password |
 | Threads（Meta） | ✓ | Threads API アクセストークン |
+| LinkedIn | ✓ | Typefully API のみ（直接APIは審査が重いため未実装） |
 
 未設定のプラットフォームは自動でスキップされます（`postAll` は各プラットフォームを並行実行し、設定済みの分だけ投稿）。
 
@@ -85,6 +86,15 @@ Meta for Developers でアプリ作成 → Threads API プロダクト追加 →
 
 - `THREADS_USER_ID`
 - `THREADS_ACCESS_TOKEN`
+
+### LinkedIn の `.env`
+
+LinkedIn公式APIは個人開発者の投稿権限申請が重い（手動審査・平均数ヶ月・却下も多い）ため、
+直接APIは未実装。**Typefully経由のみ**対応（上記「課金せずにX投稿したい場合」参照）。
+
+- `TYPEFULLY_API_KEY` / `TYPEFULLY_SOCIAL_SET_ID`（Xと共通）
+- `LINKEDIN_ENABLED=1`（未設定だとTypefully設定済みでもLinkedInには投稿しない）
+- Typefully側で対象アカウントのLinkedInを連携済みであること
 
 ## Web UI（ローカル）
 
@@ -175,7 +185,7 @@ lib/
   relay-webhooks.ts     # Slack/Discord通知
   oauth1a.ts             # X OAuth1.0a署名
   post-x.ts              # X投稿（直接API）
-  post-x-typefully.ts    # X投稿（Typefully経由、無料プラン月15投稿まで）
+  post-typefully.ts      # X/LinkedIn投稿（Typefully経由、無料プラン月15投稿まで）
   post-bluesky.ts        # Bluesky投稿（セッション90分キャッシュ）
   post-threads.ts        # Threads投稿（2ステップ: container作成→publish）
   post-all.ts            # 全プラットフォーム並行投稿 + 履歴保存

@@ -1,10 +1,13 @@
 const API_BASE = "https://api.typefully.com/v2";
 
+export type TypefullyPlatform = "x" | "linkedin";
+
 interface DraftResponse {
   id: number | string;
   social_set_id: number | string;
   status: string; // "draft" | "scheduled" | "published" | "error" | "planned"
   x_published_url?: string;
+  linkedin_published_url?: string;
   error?: string;
 }
 
@@ -12,13 +15,18 @@ function authHeaders(apiKey: string): Record<string, string> {
   return { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" };
 }
 
-async function createDraft(apiKey: string, socialSetId: string, text: string): Promise<DraftResponse> {
+async function createDraft(
+  apiKey: string,
+  socialSetId: string,
+  text: string,
+  platform: TypefullyPlatform
+): Promise<DraftResponse> {
   const res = await fetch(`${API_BASE}/social-sets/${socialSetId}/drafts`, {
     method: "POST",
     headers: authHeaders(apiKey),
     body: JSON.stringify({
       publish_at: "now",
-      platforms: { x: {} },
+      platforms: { [platform]: {} },
       posts: [{ text }],
     }),
   });
@@ -44,16 +52,16 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Typefully 経由でXへ投稿する（無料プラン: 月15投稿まで）。
+// Typefully 経由で指定プラットフォームへ投稿する（無料プラン: 月15投稿まで、全プラットフォーム合算）。
 // publish_at: "now" は非同期処理なので、公開URLが確定するまでポーリングする。
-export async function postTweetViaTypefully(text: string): Promise<string> {
+export async function postViaTypefully(text: string, platform: TypefullyPlatform): Promise<string> {
   const apiKey = process.env.TYPEFULLY_API_KEY;
   const socialSetId = process.env.TYPEFULLY_SOCIAL_SET_ID;
   if (!apiKey || !socialSetId) {
     throw new Error("TYPEFULLY_API_KEY, TYPEFULLY_SOCIAL_SET_ID を .env に設定してください。");
   }
 
-  const created = await createDraft(apiKey, socialSetId, text);
+  const created = await createDraft(apiKey, socialSetId, text, platform);
 
   // 公開完了（status: published）になるまで最大15秒、1秒間隔でポーリング
   let draft = created;
@@ -65,10 +73,19 @@ export async function postTweetViaTypefully(text: string): Promise<string> {
   if (draft.status === "error") {
     throw new Error(draft.error || "Typefully側で投稿に失敗しました。");
   }
-  if (!draft.x_published_url) {
+  const url = platform === "x" ? draft.x_published_url : draft.linkedin_published_url;
+  if (!url) {
     throw new Error(
       `投稿は受け付けられましたが公開確認がタイムアウトしました（status: ${draft.status}）。Typefully側で確認してください。`
     );
   }
-  return draft.x_published_url;
+  return url;
+}
+
+export function postTweetViaTypefully(text: string): Promise<string> {
+  return postViaTypefully(text, "x");
+}
+
+export function postLinkedInViaTypefully(text: string): Promise<string> {
+  return postViaTypefully(text, "linkedin");
 }

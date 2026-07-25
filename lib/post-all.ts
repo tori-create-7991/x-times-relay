@@ -1,5 +1,5 @@
 import { postTweet, tweetPermalink } from "./post-x";
-import { postTweetViaTypefully } from "./post-x-typefully";
+import { postTweetViaTypefully, postLinkedInViaTypefully } from "./post-typefully";
 import { postBluesky } from "./post-bluesky";
 import { postThreads } from "./post-threads";
 import { relayWebhooks } from "./relay-webhooks";
@@ -12,7 +12,7 @@ export async function postAll(
 ): Promise<PostAllResult> {
   const username = process.env.X_USERNAME?.trim();
 
-  const [xResult, bskyResult, threadsResult] = await Promise.all([
+  const [xResult, bskyResult, threadsResult, linkedinResult] = await Promise.all([
     // X（TYPEFULLY_API_KEY 設定時はTypefully経由、それ以外は直接X API）
     (async (): Promise<PlatformResult> => {
       const useTypefully = !!process.env.TYPEFULLY_API_KEY;
@@ -50,6 +50,16 @@ export async function postAll(
         return { url: null, ok: false, error: (e as Error).message };
       }
     })(),
+    // LinkedIn（Typefully経由のみ。直接APIは審査が重いため未実装）
+    (async (): Promise<PlatformResult> => {
+      if (!process.env.TYPEFULLY_API_KEY || process.env.LINKEDIN_ENABLED !== "1") return null;
+      try {
+        const url = await postLinkedInViaTypefully(text);
+        return { url, ok: true };
+      } catch (e) {
+        return { url: null, ok: false, error: (e as Error).message };
+      }
+    })(),
   ]);
 
   // Slack/Discord へは X の URL のみ中継
@@ -69,7 +79,8 @@ export async function postAll(
     x: xResult,
     bluesky: bskyResult,
     threads: threadsResult,
+    linkedin: linkedinResult,
   });
 
-  return { x: xResult, bluesky: bskyResult, threads: threadsResult };
+  return { x: xResult, bluesky: bskyResult, threads: threadsResult, linkedin: linkedinResult };
 }
